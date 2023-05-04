@@ -229,7 +229,7 @@ const displayShowDetails = async () => {
 };
 
 // Function will display Search results
-const displaySearchResults = () => {
+const displaySearchResults = (results) => {
   results.forEach((result) => {
     const div = document.createElement('div');
     div.classList.add('card');
@@ -258,7 +258,7 @@ const displaySearchResults = () => {
               global.search.type === 'movie' ? result.title : result.name
             }</h5>
             <p class="card-text">
-              <small class="text-muted">Release: ${
+              <small class="text-muted"> Release: ${
                 global.search.type === 'movie'
                   ? result.release_date
                   : result.first_air_date
