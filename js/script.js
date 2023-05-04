@@ -3,6 +3,16 @@
 // Global variables
 const global = {
   currentPage: window.location.pathname,
+  search: {
+    term: '',
+    type: '',
+    page: 1,
+    totalPages: 1,
+  },
+  api: {
+    apiKey: '2237c973fb5b3b0df94d16ffb2f91448',
+    apiUrl: 'https://api.themoviedb.org/3/',
+  },
 };
 
 // Function will display the popular movies
@@ -168,52 +178,52 @@ const displayShowDetails = async () => {
     src="https://image.tmdb.org/t/p/w500${show.poster_path}"
     class="card-img-top"
     alt="${show.name}"
-  />`
+    />`
       : `<img
-  src="../images/no-image.jpg"
-  class="card-img-top"
-  alt="${show.name}"
-/>`
+    src="../images/no-image.jpg"
+    class="card-img-top"
+    alt="${show.name}"
+  />`
   }
+    </div>
+    <div>
+      <h2>${show.name}</h2>
+      <p>
+        <i class="fas fa-star text-primary"></i>
+        ${show.vote_average.toFixed(1)} / 10
+      </p>
+      <p class="text-muted">Last Air Date: ${show.last_air_date}</p>
+      <p>
+        ${show.overview}
+      </p>
+      <h5>Genres</h5>
+      <ul class="list-group">
+        ${show.genres.map((genre) => `<li>${genre.name}</li>`).join('')}
+      </ul>
+      <a href="${
+        show.homepage
+      }" target="_blank" class="btn">Visit show Homepage</a>
+    </div>
   </div>
-  <div>
-    <h2>${show.name}</h2>
-    <p>
-      <i class="fas fa-star text-primary"></i>
-      ${show.vote_average.toFixed(1)} / 10
-    </p>
-    <p class="text-muted">Last Air Date: ${show.last_air_date}</p>
-    <p>
-      ${show.overview}
-    </p>
-    <h5>Genres</h5>
-    <ul class="list-group">
-      ${show.genres.map((genre) => `<li>${genre.name}</li>`).join('')}
+  <div class="details-bottom">
+    <h2>Show Info</h2>
+    <ul>
+      <li><span class="text-secondary">Number of Episodes:</span> ${
+        show.number_of_episodes
+      }</li>
+      <li><span class="text-secondary">Last Episode To Air:</span> ${
+        show.last_episode_to_air.name
+      }</li>
+      <li><span class="text-secondary">Status:</span> ${show.status}</li>
     </ul>
-    <a href="${
-      show.homepage
-    }" target="_blank" class="btn">Visit show Homepage</a>
+    <h4>Production Companies</h4>
+    <div class="list-group">
+      ${show.production_companies
+        .map((company) => `<span>${company.name}</span>`)
+        .join(', ')}
+    </div>
   </div>
-</div>
-<div class="details-bottom">
-  <h2>Show Info</h2>
-  <ul>
-    <li><span class="text-secondary">Number of Episodes:</span> ${
-      show.number_of_episodes
-    }</li>
-    <li><span class="text-secondary">Last Episode To Air:</span> ${
-      show.last_episode_to_air.name
-    }</li>
-    <li><span class="text-secondary">Status:</span> ${show.status}</li>
-  </ul>
-  <h4>Production Companies</h4>
-  <div class="list-group">
-    ${show.production_companies
-      .map((company) => `<span>${company.name}</span>`)
-      .join(', ')}
-  </div>
-</div>
-  `;
+    `;
 
   document.querySelector('#show-details').appendChild(div);
 };
@@ -286,15 +296,51 @@ const initSwiper = () => {
     },
   });
 };
+
 // Function will fetch data from API
 const fetchAPIData = async (endpoint) => {
-  const API_KEY = '2237c973fb5b3b0df94d16ffb2f91448'; // Put your api key here
-  const API_URL = 'https://api.themoviedb.org/3/';
+  const API_KEY = global.api.apiKey;
+  const API_URL = global.api.apiUrl;
 
   showSpinner();
 
   const response = await fetch(
     `${API_URL}${endpoint}?api_key=${API_KEY}&language=en-US`
+  );
+
+  const data = await response.json();
+
+  hideSpinner();
+
+  return data;
+};
+
+// Function will fetch search results from the API and display them
+const search = async () => {
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+
+  // Add the type and term to the global object
+  global.search.type = urlParams.get('type');
+  global.search.term = urlParams.get('search-term');
+
+  if (global.search.term !== '' && global.search.term !== null) {
+    const results = await searchAPIData();
+    console.log(results);
+  } else {
+    showAlert('Please enter a search term');
+  }
+};
+
+// Function will get data from API
+const searchAPIData = async () => {
+  const API_KEY = global.api.apiKey;
+  const API_URL = global.api.apiUrl;
+
+  showSpinner();
+
+  const response = await fetch(
+    `${API_URL}search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}`
   );
 
   const data = await response.json();
@@ -324,6 +370,16 @@ function highlightActiveLink() {
   });
 }
 
+// Function will show an alert
+const showAlert = (message, className = 'error') => {
+  const alertEl = document.createElement('div');
+  alertEl.classList.add('alert', className);
+  alertEl.appendChild(document.createTextNode(message));
+  document.querySelector('#alert').appendChild(alertEl);
+
+  setTimeout(() => alertEl.remove(), 3000);
+};
+
 // Function will add cmmas to large numbers
 const addCommasToNumber = (number) => {
   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -347,7 +403,7 @@ function init() {
       displayShowDetails();
       break;
     case '/search.html':
-      console.log('Search');
+      search();
       break;
   }
 
